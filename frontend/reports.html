@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>報告列表 - 漏洞報告管理系統</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 側邊欄 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <span class="logo-icon">🛡️</span>
+                    <span class="logo-text">VulnTracker</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="index.html" class="nav-item">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-text">儀表板</span>
+                </a>
+                <a href="reports.html" class="nav-item active">
+                    <span class="nav-icon">📋</span>
+                    <span class="nav-text">報告列表</span>
+                </a>
+                <a href="logs.html" class="nav-item">
+                    <span class="nav-icon">📜</span>
+                    <span class="nav-text">操作日誌</span>
+                </a>
+                <div class="nav-divider"></div>
+                <button class="nav-item" id="btn-import">
+                    <span class="nav-icon">📥</span>
+                    <span class="nav-text">匯入報告</span>
+                </button>
+                <a href="settings.html" class="nav-item">
+                    <span class="nav-icon">⚙️</span>
+                    <span class="nav-text">系統設定</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="version">v1.0.0</div>
+            </div>
+        </aside>
+        
+        <!-- 主內容區 -->
+        <main class="main-content">
+            <div class="page-header">
+                <h1>📋 報告列表</h1>
+                <div class="page-actions">
+                    <div class="search-box">
+                        <input type="text" id="search-input" placeholder="搜尋網站 URL..." class="input">
+                        <button class="btn btn-icon" onclick="searchReports()">🔍</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 篩選欄 -->
+            <div class="filter-bar">
+                <div class="filter-group">
+                    <label>嚴重等級：</label>
+                    <select id="filter-severity" class="select" onchange="applyFilters()">
+                        <option value="">全部</option>
+                        <option value="High">🔴 High</option>
+                        <option value="Medium">🟠 Medium</option>
+                        <option value="Low">🟡 Low</option>
+                        <option value="Informational">🔵 Informational</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>狀態：</label>
+                    <select id="filter-status" class="select" onchange="applyFilters()">
+                        <option value="">全部</option>
+                        <option value="pending">⏳ 待處理</option>
+                        <option value="in_progress">🔄 處理中</option>
+                        <option value="fixed">✅ 已修復</option>
+                        <option value="wont_fix">🚫 不修復</option>
+                        <option value="false_positive">❌ 誤報</option>
+                    </select>
+                </div>
+                <button class="btn btn-outline" onclick="resetFilters()">重置篩選</button>
+            </div>
+
+            <!-- 報告表格 -->
+            <div class="card">
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">#</th>
+                                <th>網站 URL</th>
+                                <th style="width: 150px;">匯入時間</th>
+                                <th style="width: 200px;">漏洞統計</th>
+                                <th style="width: 120px;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reports-tbody">
+                            <tr><td colspan="5" class="loading">載入中...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- 分頁 -->
+                <div class="pagination" id="pagination"></div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- 匯入 Modal -->
+    <div class="modal" id="import-modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📥 匯入 JSON 報告</h3>
+                <button class="modal-close" onclick="closeModal('import-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="upload-zone" id="upload-zone">
+                    <div class="upload-icon">📁</div>
+                    <p>拖放 JSON 檔案到此處</p>
+                    <p class="upload-hint">或點擊選擇檔案（支援多檔）</p>
+                    <input type="file" id="file-input" accept=".json" multiple hidden>
+                </div>
+                <div class="upload-progress" id="upload-progress" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                    <div class="progress-text" id="progress-text">上傳中...</div>
+                </div>
+                <div class="upload-results" id="upload-results"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast 通知 -->
+    <div class="toast-container" id="toast-container"></div>
+    
+    <script src="config.js"></script>
+    <script src="js/common.js"></script>
+    <script src="js/reports.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系統設定 - 漏洞報告管理系統</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 側邊欄 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <span class="logo-icon">🛡️</span>
+                    <span class="logo-text">VulnTracker</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="index.html" class="nav-item">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-text">儀表板</span>
+                </a>
+                <a href="reports.html" class="nav-item">
+                    <span class="nav-icon">📋</span>
+                    <span class="nav-text">報告列表</span>
+                </a>
+                <a href="logs.html" class="nav-item">
+                    <span class="nav-icon">📜</span>
+                    <span class="nav-text">操作日誌</span>
+                </a>
+                <div class="nav-divider"></div>
+                <button class="nav-item" id="btn-import">
+                    <span class="nav-icon">📥</span>
+                    <span class="nav-text">匯入報告</span>
+                </button>
+                <a href="settings.html" class="nav-item active">
+                    <span class="nav-icon">⚙️</span>
+                    <span class="nav-text">系統設定</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="version">v1.0.0</div>
+            </div>
+        </aside>
+        
+        <!-- 主內容區 -->
+        <main class="main-content">
+            <div class="page-header">
+                <h1>⚙️ 系統設定</h1>
+            </div>
+
+            <!-- 資料庫匯出 -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>📤 匯出資料庫</h3>
+                </div>
+                <div class="card-body">
+                    <p style="color: var(--text-secondary); margin-bottom: var(--space-md);">匯出目前資料庫的所有資料，可選擇格式。</p>
+                    <div style="display: flex; gap: var(--space-md);">
+                        <button class="btn" onclick="exportSQL()">
+                            📄 匯出 SQL Dump
+                        </button>
+                        <button class="btn" onclick="exportJSON()">
+                            📦 匯出全部 JSON (ZIP)
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 資料庫還原 -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>📥 還原資料庫</h3>
+                </div>
+                <div class="card-body">
+                    <p style="color: var(--text-secondary); margin-bottom: var(--space-md);">從 SQL dump 檔案還原資料庫。此操作需要驗證密碼。</p>
+                    <div class="form-group">
+                        <label>SQL 檔案</label>
+                        <input type="file" id="sql-file" accept=".sql" class="input">
+                    </div>
+                    <div class="form-group">
+                        <label>資料庫密碼</label>
+                        <input type="password" id="restore-password" class="input" placeholder="輸入資料庫密碼以確認">
+                    </div>
+                    <button class="btn btn-primary" onclick="importSQL()">📥 還原 SQL</button>
+                </div>
+            </div>
+
+            <!-- 重置資料庫 -->
+            <div class="card" style="border-color: var(--accent-danger);">
+                <div class="card-header" style="background: rgba(248, 81, 73, 0.1);">
+                    <h3 style="color: var(--accent-danger);">⚠️ 危險操作</h3>
+                </div>
+                <div class="card-body">
+                    <p style="color: var(--text-secondary); margin-bottom: var(--space-md);">
+                        重置資料庫將<strong style="color: var(--accent-danger);">刪除所有資料</strong>，包含報告、漏洞、日誌等。此操作無法復原！
+                    </p>
+                    <button class="btn btn-danger" onclick="showResetModal()">🗑️ 重置資料庫</button>
+                </div>
+            </div>
+
+            <!-- 重置確認 Modal -->
+            <div class="modal" id="reset-modal">
+                <div class="modal-backdrop"></div>
+                <div class="modal-content">
+                    <div class="modal-header" style="background: rgba(248, 81, 73, 0.1);">
+                        <h3 style="color: var(--accent-danger);">⚠️ 確認重置資料庫</h3>
+                        <button class="modal-close" onclick="closeModal('reset-modal')">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <p style="margin-bottom: var(--space-md);">
+                            此操作將<strong style="color: var(--accent-danger);">永久刪除</strong>所有資料：
+                        </p>
+                        <ul style="color: var(--text-secondary); margin-bottom: var(--space-lg); padding-left: 20px;">
+                            <li>所有掃描報告</li>
+                            <li>所有漏洞資料</li>
+                            <li>所有操作日誌</li>
+                            <li>所有備註與狀態</li>
+                        </ul>
+                        <div class="form-group">
+                            <label>請輸入資料庫密碼以確認</label>
+                            <input type="password" id="reset-password" class="input" placeholder="輸入資料庫密碼">
+                        </div>
+                        <div class="modal-actions">
+                            <button class="btn btn-outline" onclick="closeModal('reset-modal')">取消</button>
+                            <button class="btn btn-danger" onclick="confirmReset()">確認重置</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- 匯入 Modal -->
+    <div class="modal" id="import-modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📥 匯入 JSON 報告</h3>
+                <button class="modal-close" onclick="closeModal('import-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="upload-zone" id="upload-zone">
+                    <div class="upload-icon">📁</div>
+                    <p>拖放 JSON 檔案到此處</p>
+                    <p class="upload-hint">或點擊選擇檔案（支援多檔）</p>
+                    <input type="file" id="file-input" accept=".json" multiple hidden>
+                </div>
+                <div class="upload-progress" id="upload-progress" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                    <div class="progress-text" id="progress-text">上傳中...</div>
+                </div>
+                <div class="upload-results" id="upload-results"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast 通知 -->
+    <div class="toast-container" id="toast-container"></div>
+    
+    <script src="config.js"></script>
+    <script src="js/common.js"></script>
+    <script>
+    function exportSQL() {
+        showToast('正在匯出 SQL...');
+        window.location.href = `${API_BASE}/db/export/sql`;
+    }
+
+    function exportJSON() {
+        showToast('正在匯出 JSON ZIP...');
+        window.location.href = `${API_BASE}/db/export/json`;
+    }
+
+    async function importSQL() {
+        const fileInput = document.getElementById('sql-file');
+        const password = document.getElementById('restore-password').value;
+        
+        if (!fileInput.files.length) {
+            showToast('請選擇 SQL 檔案', 'error');
+            return;
+        }
+        
+        if (!password) {
+            showToast('請輸入資料庫密碼', 'error');
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+        formData.append('password', password);
+        
+        try {
+            const response = await fetch(`${API_BASE}/db/import/sql`, {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+            
+            if (result.success) {
+                showToast('SQL 還原成功！');
+                fileInput.value = '';
+                document.getElementById('restore-password').value = '';
+            } else {
+                showToast(result.error || '還原失敗', 'error');
+            }
+        } catch (error) {
+            showToast('還原失敗: ' + error.message, 'error');
+        }
+    }
+
+    function showResetModal() {
+        document.getElementById('reset-password').value = '';
+        openModal('reset-modal');
+    }
+
+    async function confirmReset() {
+        const password = document.getElementById('reset-password').value;
+        
+        if (!password) {
+            showToast('請輸入資料庫密碼', 'error');
+            return;
+        }
+        
+        try {
+            const result = await api('/db/reset', {
+                method: 'POST',
+                body: { password }
+            });
+            
+            if (result.success) {
+                showToast('資料庫已重置');
+                closeModal('reset-modal');
+                // 重新整理頁面
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                showToast(result.error || '重置失敗', 'error');
+            }
+        } catch (error) {
+            showToast('重置失敗: ' + error.message, 'error');
+        }
+    }
+    </script>
+</body>
+</html>
+

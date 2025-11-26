@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>儀表板 - 漏洞報告管理系統</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 側邊欄 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <span class="logo-icon">🛡️</span>
+                    <span class="logo-text">VulnTracker</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="index.html" class="nav-item active">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-text">儀表板</span>
+                </a>
+                <a href="reports.html" class="nav-item">
+                    <span class="nav-icon">📋</span>
+                    <span class="nav-text">報告列表</span>
+                </a>
+                <a href="logs.html" class="nav-item">
+                    <span class="nav-icon">📜</span>
+                    <span class="nav-text">操作日誌</span>
+                </a>
+                <div class="nav-divider"></div>
+                <button class="nav-item" id="btn-import">
+                    <span class="nav-icon">📥</span>
+                    <span class="nav-text">匯入報告</span>
+                </button>
+                <a href="settings.html" class="nav-item">
+                    <span class="nav-icon">⚙️</span>
+                    <span class="nav-text">系統設定</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="version">v1.0.0</div>
+            </div>
+        </aside>
+        
+        <!-- 主內容區 -->
+        <main class="main-content">
+            <div class="page-header">
+                <h1>📊 儀表板</h1>
+                <p class="page-desc">漏洞掃描報告總覽</p>
+            </div>
+
+            <!-- 統計卡片 -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);">📋</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="stat-reports">-</div>
+                        <div class="stat-label">報告總數</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb, #f5576c);">🔓</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="stat-vulns">-</div>
+                        <div class="stat-label">漏洞類型</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">🎯</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="stat-instances">-</div>
+                        <div class="stat-label">漏洞實例</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #43e97b, #38f9d7);">✅</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="stat-fixed">-</div>
+                        <div class="stat-label">已修復</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 雙欄布局 -->
+            <div class="dashboard-grid">
+                <!-- 嚴重等級分布 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>🎨 嚴重等級分布</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="severity-chart" id="severity-chart">
+                            <div class="severity-bar" data-severity="High">
+                                <span class="severity-label">🔴 High</span>
+                                <div class="bar-track">
+                                    <div class="bar-fill high" id="bar-high"></div>
+                                </div>
+                                <span class="severity-count" id="count-high">0</span>
+                            </div>
+                            <div class="severity-bar" data-severity="Medium">
+                                <span class="severity-label">🟠 Medium</span>
+                                <div class="bar-track">
+                                    <div class="bar-fill medium" id="bar-medium"></div>
+                                </div>
+                                <span class="severity-count" id="count-medium">0</span>
+                            </div>
+                            <div class="severity-bar" data-severity="Low">
+                                <span class="severity-label">🟡 Low</span>
+                                <div class="bar-track">
+                                    <div class="bar-fill low" id="bar-low"></div>
+                                </div>
+                                <span class="severity-count" id="count-low">0</span>
+                            </div>
+                            <div class="severity-bar" data-severity="Informational">
+                                <span class="severity-label">🔵 Info</span>
+                                <div class="bar-track">
+                                    <div class="bar-fill info" id="bar-info"></div>
+                                </div>
+                                <span class="severity-count" id="count-info">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 修復狀態 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>📈 修復進度</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="status-donut" id="status-donut">
+                            <svg viewBox="0 0 100 100" class="donut-svg">
+                                <circle cx="50" cy="50" r="40" fill="none" stroke="#2d3748" stroke-width="12"/>
+                                <circle cx="50" cy="50" r="40" fill="none" stroke="#48bb78" stroke-width="12" 
+                                        stroke-dasharray="0 251.2" stroke-dashoffset="62.8" id="donut-fixed"
+                                        class="donut-segment"/>
+                                <circle cx="50" cy="50" r="40" fill="none" stroke="#ed8936" stroke-width="12" 
+                                        stroke-dasharray="0 251.2" id="donut-progress"
+                                        class="donut-segment"/>
+                                <circle cx="50" cy="50" r="40" fill="none" stroke="#718096" stroke-width="12" 
+                                        stroke-dasharray="0 251.2" id="donut-pending"
+                                        class="donut-segment"/>
+                            </svg>
+                            <div class="donut-center">
+                                <span class="donut-percent" id="donut-percent">0%</span>
+                                <span class="donut-label">已修復</span>
+                            </div>
+                        </div>
+                        <div class="status-legend">
+                            <div class="legend-item"><span class="legend-color" style="background:#48bb78"></span>已修復</div>
+                            <div class="legend-item"><span class="legend-color" style="background:#ed8936"></span>處理中</div>
+                            <div class="legend-item"><span class="legend-color" style="background:#718096"></span>待處理</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 最近報告 -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>🕐 最近匯入的報告</h3>
+                    <a href="reports.html" class="btn btn-sm">查看全部 →</a>
+                </div>
+                <div class="card-body">
+                    <div class="recent-reports" id="recent-reports">
+                        <div class="loading">載入中...</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- 匯入 Modal -->
+    <div class="modal" id="import-modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📥 匯入 JSON 報告</h3>
+                <button class="modal-close" onclick="closeModal('import-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="upload-zone" id="upload-zone">
+                    <div class="upload-icon">📁</div>
+                    <p>拖放 JSON 檔案到此處</p>
+                    <p class="upload-hint">或點擊選擇檔案（支援多檔）</p>
+                    <input type="file" id="file-input" accept=".json" multiple hidden>
+                </div>
+                <div class="upload-progress" id="upload-progress" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                    <div class="progress-text" id="progress-text">上傳中...</div>
+                </div>
+                <div class="upload-results" id="upload-results"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast 通知 -->
+    <div class="toast-container" id="toast-container"></div>
+    
+    <script src="config.js"></script>
+    <script src="js/common.js"></script>
+    <script src="js/dashboard.js"></script>
+</body>
+</html>
+

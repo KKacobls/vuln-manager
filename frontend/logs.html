@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>操作日誌 - 漏洞報告管理系統</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 側邊欄 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <span class="logo-icon">🛡️</span>
+                    <span class="logo-text">VulnTracker</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="index.html" class="nav-item">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-text">儀表板</span>
+                </a>
+                <a href="reports.html" class="nav-item">
+                    <span class="nav-icon">📋</span>
+                    <span class="nav-text">報告列表</span>
+                </a>
+                <a href="logs.html" class="nav-item active">
+                    <span class="nav-icon">📜</span>
+                    <span class="nav-text">操作日誌</span>
+                </a>
+                <div class="nav-divider"></div>
+                <button class="nav-item" id="btn-import">
+                    <span class="nav-icon">📥</span>
+                    <span class="nav-text">匯入報告</span>
+                </button>
+                <a href="settings.html" class="nav-item">
+                    <span class="nav-icon">⚙️</span>
+                    <span class="nav-text">系統設定</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="version">v1.0.0</div>
+            </div>
+        </aside>
+        
+        <!-- 主內容區 -->
+        <main class="main-content">
+            <div class="page-header">
+                <h1>📜 操作日誌</h1>
+                <div class="page-actions">
+                    <select id="filter-type" class="select" onchange="loadLogs(1)">
+                        <option value="">全部類型</option>
+                        <option value="IMPORT">📥 匯入</option>
+                        <option value="DELETE">🗑️ 刪除</option>
+                        <option value="STATUS">🔄 狀態更新</option>
+                        <option value="EXPORT">📤 匯出</option>
+                    </select>
+                    <button class="btn" onclick="loadLogs(1)">🔄 重新整理</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th style="width: 180px;">時間</th>
+                                <th style="width: 100px;">類型</th>
+                                <th>操作內容</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logs-tbody">
+                            <tr><td colspan="3" class="loading">載入中...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="pagination" id="pagination"></div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- 匯入 Modal -->
+    <div class="modal" id="import-modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📥 匯入 JSON 報告</h3>
+                <button class="modal-close" onclick="closeModal('import-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="upload-zone" id="upload-zone">
+                    <div class="upload-icon">📁</div>
+                    <p>拖放 JSON 檔案到此處</p>
+                    <p class="upload-hint">或點擊選擇檔案（支援多檔）</p>
+                    <input type="file" id="file-input" accept=".json" multiple hidden>
+                </div>
+                <div class="upload-progress" id="upload-progress" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                    <div class="progress-text" id="progress-text">上傳中...</div>
+                </div>
+                <div class="upload-results" id="upload-results"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast 通知 -->
+    <div class="toast-container" id="toast-container"></div>
+    
+    <script src="config.js"></script>
+    <script src="js/common.js"></script>
+    <script>
+    let currentPage = 1;
+
+    document.addEventListener('DOMContentLoaded', () => loadLogs(1));
+
+    async function loadLogs(page = 1) {
+        currentPage = page;
+        const tbody = document.getElementById('logs-tbody');
+        tbody.innerHTML = '<tr><td colspan="3" class="loading">載入中...</td></tr>';
+        
+        const actionType = document.getElementById('filter-type').value;
+        
+        try {
+            const params = new URLSearchParams({ page, per_page: 50 });
+            if (actionType) params.append('type', actionType);
+            
+            const data = await api(`/logs?${params}`);
+            
+            if (!data.logs.length) {
+                tbody.innerHTML = '<tr><td colspan="3" class="loading">尚無日誌</td></tr>';
+                document.getElementById('pagination').innerHTML = '';
+                return;
+            }
+            
+            tbody.innerHTML = data.logs.map(log => `
+                <tr>
+                    <td style="font-family: var(--font-mono); font-size: 13px;">${log.created_at}</td>
+                    <td>${getTypeLabel(log.action_type)}</td>
+                    <td>${escapeHtml(log.message)}</td>
+                </tr>
+            `).join('');
+            
+            updatePagination(data.current_page, data.pages, data.total);
+            
+        } catch (error) {
+            tbody.innerHTML = `<tr><td colspan="3" class="loading">載入失敗: ${error.message}</td></tr>`;
+        }
+    }
+
+    function getTypeLabel(type) {
+        const map = {
+            'IMPORT': '<span class="status-badge" style="background: rgba(63, 185, 80, 0.2); color: #3fb950;">📥 匯入</span>',
+            'DELETE': '<span class="status-badge" style="background: rgba(248, 81, 73, 0.2); color: #f85149;">🗑️ 刪除</span>',
+            'STATUS': '<span class="status-badge" style="background: rgba(88, 166, 255, 0.2); color: #58a6ff;">🔄 狀態</span>',
+            'EXPORT': '<span class="status-badge" style="background: rgba(210, 153, 34, 0.2); color: #d29922;">📤 匯出</span>'
+        };
+        return map[type] || type;
+    }
+
+    function updatePagination(current, total, count) {
+        const container = document.getElementById('pagination');
+        
+        if (total <= 1) {
+            container.innerHTML = `<span style="color: var(--text-muted);">共 ${count} 筆</span>`;
+            return;
+        }
+        
+        let html = `<span style="color: var(--text-muted); margin-right: 16px;">共 ${count} 筆</span>`;
+        html += `<button class="btn btn-sm" ${current === 1 ? 'disabled' : ''} onclick="loadLogs(${current - 1})">←</button>`;
+        
+        for (let i = 1; i <= total; i++) {
+            if (i === 1 || i === total || (i >= current - 2 && i <= current + 2)) {
+                html += `<button class="btn btn-sm ${i === current ? 'active' : ''}" onclick="loadLogs(${i})">${i}</button>`;
+            } else if (i === current - 3 || i === current + 3) {
+                html += '<span style="color: var(--text-muted);">...</span>';
+            }
+        }
+        
+        html += `<button class="btn btn-sm" ${current === total ? 'disabled' : ''} onclick="loadLogs(${current + 1})">→</button>`;
+        container.innerHTML = html;
+    }
+    </script>
+</body>
+</html>
+
